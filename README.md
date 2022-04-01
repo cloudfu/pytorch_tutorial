@@ -27,3 +27,10 @@
 
 ### 如何理解矩阵相乘的几何意义或现实意义？
 https://www.zhihu.com/question/28623194
+
+
+
+#增加代理
+git config --global http.https://github.com.proxy/ socks5://127.0.0.1:51837
+#取消代理
+git config --global --unset http.https://github.com.proxy/
