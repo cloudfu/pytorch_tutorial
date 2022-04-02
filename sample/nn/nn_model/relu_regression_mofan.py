@@ -43,7 +43,9 @@ plt.ion()   # something about plotting
 
 for t in range(200):
     prediction = net(x)     # input x and predict based on x
-
+    print(prediction.data)
+    print(net.hidden.weight.data[0])
+    print(net.hidden.bias.data[0])
     loss = loss_func(prediction, y)     # must be (1. nn output, 2. target)
 
     optimizer.zero_grad()   # clear gradients for next train
