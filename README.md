@@ -29,6 +29,10 @@
 https://www.zhihu.com/question/28623194
 
 
+### 卷积神经网络
+【卷积神经网络CNN】路飞和美女做了什么坏事？
+https://www.bilibili.com/video/BV1fY411H7g8/?spm_id_from=333.788
+
 
 #增加代理
 git config --global http.https://github.com.proxy socks5://127.0.0.1:51837
