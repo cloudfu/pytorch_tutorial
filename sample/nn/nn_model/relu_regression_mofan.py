@@ -43,6 +43,8 @@ plt.ion()   # something about plotting
 
 for t in range(200):
     prediction = net(x)     # input x and predict based on x
+
+    # print nn parameters
     print(prediction.data)
     print(net.hidden.weight.data[0])
     print(net.hidden.bias.data[0])
