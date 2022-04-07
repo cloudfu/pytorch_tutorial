@@ -14,8 +14,10 @@ def corr2d(X, K):
 def corr2d_multi_in(X, K):
     # 先遍历“X”和“K”的第0个维度（通道维度），再把它们加在一起
     # 先拆解第0维度的数据集，拆解后就是一个2位图片和2维卷积和进行互相关预算；
-    for x, k in zip(X, K):
-        print(x,k)
+    # 将多通道图层在进行累加 sum(通道层)
+    # (1*1+2*2+4*3+5*4)+(0*0+1*1+3*2+4*3)=56
+    # for x, k in zip(X, K):
+    #     print(x,k)
     return sum(corr2d(x, k) for x, k in zip(X, K))
 
 # X.shape = (2,3,3)
@@ -37,7 +39,6 @@ def corr2d_multi_in_out(X, K):
 
 
 K = torch.stack((K, K + 1, K + 2), 0)
-print(K.shape)
 print(corr2d_multi_in_out(X, K))
 
 # def corr2d_multi_in_out_1x1(X, K):
