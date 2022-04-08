@@ -30,7 +30,7 @@ K = torch.tensor([
                     [[1.0, 2.0], [3.0, 4.0]]
                 ])
 
-print(corr2d_multi_in(X, K))
+# print(corr2d_multi_in(X, K))
 
 def corr2d_multi_in_out(X, K):
     # 迭代“K”的第0个维度，每次都对输入“X”执行互相关运算。
@@ -39,21 +39,22 @@ def corr2d_multi_in_out(X, K):
 
 
 K = torch.stack((K, K + 1, K + 2), 0)
-print(corr2d_multi_in_out(X, K))
+# print(corr2d_multi_in_out(X, K))
 
-# def corr2d_multi_in_out_1x1(X, K):
-#     c_i, h, w = X.shape
-#     c_o = K.shape[0]
-#     X = X.reshape((c_i, h * w))
-#     K = K.reshape((c_o, c_i))
-#     # 全连接层中的矩阵乘法
-#     Y = torch.matmul(K, X)
-#     return Y.reshape((c_o, h, w))
+# 1x1 卷积层
+def corr2d_multi_in_out_1x1(X, K):
+    c_i, h, w = X.shape
+    c_o = K.shape[0]
+    X = X.reshape((c_i, h * w))
+    K = K.reshape((c_o, c_i))
+    # 全连接层中的矩阵乘法
+    Y = torch.matmul(K, X)
+    return Y.reshape((c_o, h, w))
 
 
-# X = torch.normal(0, 1, (3, 3, 3))
-# K = torch.normal(0, 1, (2, 3, 1, 1))
+X = torch.normal(0, 1, (3, 3, 3))
+K = torch.normal(0, 1, (2, 3, 1, 1))
 
-# Y1 = corr2d_multi_in_out_1x1(X, K)
-# Y2 = corr2d_multi_in_out(X, K)
-# assert float(torch.abs(Y1 - Y2).sum()) < 1e-6
+Y1 = corr2d_multi_in_out_1x1(X, K)
+Y2 = corr2d_multi_in_out(X, K)
+assert float(torch.abs(Y1 - Y2).sum()) < 1e-6
