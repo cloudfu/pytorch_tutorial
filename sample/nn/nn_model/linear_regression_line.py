@@ -1,5 +1,8 @@
+import os
+import sys
 import torch
 from torch import nn
+sys.path.append(os.getcwd())
 from sample.nn.nn_model.base_model import base_model
 
 
@@ -52,6 +55,11 @@ class linear_regression_line(base_model):
 
         # 训练完成打印变量预估值
         w = self.nn_model[0].weight.data
+        print(w)
         print('w的估计误差：', self.true_w - w.reshape(self.true_w.shape))
         b = self.nn_model[0].bias.data
         print('b的估计误差：', self.true_b - b)
+
+
+net_linear = linear_regression_line()
+net_linear.train()

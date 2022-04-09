@@ -29,6 +29,7 @@ net = nn.Sequential(
 # image_size = 784
 X = torch.rand(size=(1, 1, 28, 28), dtype=torch.float32)
 
+# 打印所有网络嵌套层
 for layer in net:
     X = layer(X)
     print(layer.__class__.__name__,'output shape: \t',X.shape)
