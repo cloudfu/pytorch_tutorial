@@ -6,7 +6,7 @@ import torchvision
 
 net = nn.Sequential(
 
-    # 保持输入和输出形状不发生变化：padding_size = kernel_size -1
+    # 保持输入和输出形状不发生变化：padding_size = (kernel_size -1)/2
     nn.Conv2d(1, 6, kernel_size=5, padding=2), 
     nn.Sigmoid(),
     # stride=2，输出数据/2
@@ -112,6 +112,7 @@ def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
                             legend=['train loss', 'train acc', 'test acc'])
     timer, num_batches = d2l.Timer(), len(train_iter)
     for epoch in range(num_epochs):
+        
         # 训练损失之和，训练准确率之和，范例数
         metric = d2l.Accumulator(3)
         net.train()
