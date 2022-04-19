@@ -180,7 +180,7 @@ class chart_styles:
     dashed_line = '--'      
     dash_dot_line = '-.'      
     dotted_line = ':'   
-    
+
 
 # 数据输出格式和样式
 class data_chart_style:
@@ -193,42 +193,49 @@ class data_chart_style:
 
 class matplat_util:
 
-    def __init__(self,figsize,num=1):
-        self.subplot_rows = 1
-        self.subplot_cols = 1
-        self.subplot_index = 1
-        self.axis_styles = 0
+    def __init__(self,figsize,axis_styles):
+        self.subplot_rows = np.size(axis_styles, 0)
+        self.subplot_cols = np.size(axis_styles, 1)
+        self.subplot_index = (0,0)
+        self.axis_styles = axis_styles
+        self.fig = NULL
+        self.ax = NULL
+        self.font = {"size": 11,"family":'simhei'}
 
-        self.font = {'size': 11}
+        # 设置y轴的取值范围
+    	# ax.set_ylim(-10, 20)  # 设置y轴的区间
+
         # 设定输出可为中文
         plt.rcParams['font.family'] = 'simhei'
         plt.rcParams['axes.unicode_minus'] = False
 
+        # https://blog.csdn.net/zuiyishihefang/article/details/113765016    
+        # 创建子图集
+        self.fig, self.ax = plt.subplots(self.subplot_rows, self.subplot_cols, figsize=figsize)
+        # self.fig = plt.figure(figsize=figsize)  
+        # self.ax = self.fig.add_subplot(self.subplot_rows, self.subplot_cols,1)
+        
         # 子图的横向/纵向 间距
         plt.subplots_adjust(wspace=0.7, hspace=0.5)
 
-        plt.figure(num,figsize = figsize)
-
-    # 设定子图的输出行、列、图标类型、当前图标索引
-    def create_subplot(self,rows,cols,style):
-        self.subplot_rows = rows
-        self.subplot_cols = cols
-        self.axis_styles = style
-        self.set_current_subplot(1)
-
-    # 设定当前子图标索引
-    def set_current_subplot(self,index):
-        self.subplot_index = index
-        return plt.subplot(self.subplot_rows,self.subplot_cols,index)
-
-    # 添加子图标数据集,axis_index:从0开始需要负责axis_types 索引，另外subplot 单独+1计算
-    def add_axis_dataset(self,axis_index,data_label="",x_data="",y_data="",img_data=""):
+    def __get_current_axis(self,idx_axis):
 
         # 设定当前操作的子窗口
-        current_axis = self.set_current_subplot(axis_index + 1)
+        current_axis = self.ax[idx_axis]
+        # 设定当前子窗口样式
+        current_axis_styles = self.axis_styles[idx_axis]
 
+        return current_axis,current_axis_styles
+
+    # 添加子图标数据集,axis_index:从0开始需要负责axis_types 索引，另外subplot 单独+1计算
+    def add_axis_dataset(self,idx_axis,data_label="",x_data="",y_data="",img_data=""):
+
+        # 获取当前axis对象和样式
+        current_axis,current_axis_styles = self.__get_current_axis(idx_axis)
+
+        print(current_axis_styles.get_chart_title())
         # axis标题
-        plt.title(self.axis_styles[axis_index].get_chart_title(), fontdict=self.font)
+        plt.title(current_axis_styles.get_chart_title(), fontdict=self.font)
 
         # 是否清楚axis数据
         # if clear_axis:
@@ -236,15 +243,15 @@ class matplat_util:
         # plt.ion()
 
         # 折线图输出
-        if(self.axis_styles[axis_index].get_chart_type() == chart_type.line):
-            self.__draw_line(current_axis,axis_index,data_label,x_data,y_data)
+        if(current_axis_styles.get_chart_type() == chart_type.line):
+            self.__draw_line(current_axis,current_axis_styles,data_label,x_data,y_data)
             current_axis.legend(loc='best')
         # 散点输出
-        elif (self.axis_styles[axis_index].get_chart_type() == chart_type.scatter):
-            self.__draw_scatter(current_axis,axis_index,data_label,x_data,y_data)
+        elif (current_axis_styles.get_chart_type() == chart_type.scatter):
+            self.__draw_scatter(current_axis,current_axis_styles,data_label,x_data,y_data)
             current_axis.legend(loc='best')
         # 图像输出
-        elif (self.axis_styles[axis_index].get_chart_type() == chart_type.image):
+        elif (current_axis_styles.get_chart_type() == chart_type.image):
             self.__draw_image(current_axis,img_data)
             # current_axis.legend(loc='best')
 
@@ -258,9 +265,9 @@ class matplat_util:
 
 
     # 绘制折线
-    def __draw_line(self,axis,axis_index,label_name,x,y):
+    def __draw_line(self,axis,axis_style,label_name,x,y):
 
-        if(self.axis_styles[axis_index].get_animator()):
+        if(axis_style.get_animator()):
             for i in range(len(x)):
                 axis.cla()
                 axis.plot(x[0:i],y[0:i],label=label_name)
@@ -269,8 +276,8 @@ class matplat_util:
             axis.plot(x,y,label=label_name)
             
     # 绘制散点图
-    def __draw_scatter(self,axis,axis_index,label_name,x,y):
-        if(self.axis_styles[axis_index].get_animator()):
+    def __draw_scatter(self,axis,axis_style,label_name,x,y):
+        if(axis_style.get_animator()):
             for i in range(len(x)):
                 axis.cla()
                 axis.scatter(x[0:i],y[0:i],label=label_name)
@@ -326,22 +333,24 @@ image_red[:]=(0,255,0)
 image_green = np.zeros((400,400,3),dtype=np.uint8)
 image_green[:]=(255,0,0)
 
-axis_styles = [axis_style(chart_type.line,"折线图",False),
+# 2行/3列
+shape = (2,3)
+axis_styles = np.array([axis_style(chart_type.line,"line",False),
                axis_style(chart_type.scatter,"散点图",False),
                axis_style(chart_type.scatter,"折线图",False),
                axis_style(chart_type.image,"蓝色",False),
                axis_style(chart_type.image,"红色",False),
-               axis_style(chart_type.image,"绿色",False)]
+               axis_style(chart_type.image,"绿色",False)]).reshape(shape)
 
-mlp = matplat_util(figsize=(8, 5))
-mlp.create_subplot(2,3,axis_styles)
-mlp.add_axis_dataset(0,data_label="line",x_data=x,y_data=y1)
-mlp.add_axis_dataset(1,data_label="scatter",x_data=x,y_data=y2)
-mlp.add_axis_dataset(2,data_label="scatter",x_data=x,y_data=y3)
 
-mlp.add_axis_dataset(3,data_label="blue",img_data=image_blue)
-mlp.add_axis_dataset(4,data_label="red",img_data=image_red)
-mlp.add_axis_dataset(5,data_label="green",img_data=image_green)
+mlp = matplat_util(figsize=(8, 5),axis_styles=axis_styles)
+mlp.add_axis_dataset((0,0),data_label="line",x_data=x,y_data=y1)
+mlp.add_axis_dataset((0,1),data_label="scatter",x_data=x,y_data=y2)
+mlp.add_axis_dataset((0,2),data_label="scatter",x_data=x,y_data=y3)
+
+mlp.add_axis_dataset((1,0),data_label="blue",img_data=image_blue)
+mlp.add_axis_dataset((1,1),data_label="red",img_data=image_red)
+mlp.add_axis_dataset((1,2),data_label="green",img_data=image_green)
 
 mlp.show()
 

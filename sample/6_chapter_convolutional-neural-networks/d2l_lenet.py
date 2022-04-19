@@ -3,6 +3,9 @@ from torch import nn
 from d2l import torch as d2l
 from torchvision import transforms
 import torchvision
+import matplotlib.pylab as plt
+
+
 
 net = nn.Sequential(
 
@@ -94,11 +97,25 @@ def evaluate_accuracy_gpu(net, data_iter, device=None): #@save
             metric.add(d2l.accuracy(net(X), y), y.numel())
     return metric[0] / metric[1]
 
+# 计算预测值和标签值匹配度（精度）
+# 将rediction_y 和lable_y 进行比较 True=1 / False=0 并将tensor 进行累加
+def accuracy(y_hat, y):
+    """Compute the number of correct predictions."""
+    # y_hat.shape:(256,10)
+    if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
+        y_hat = d2l.argmax(y_hat, axis=1)
+    # 类型转换并进行True/False比较
+    cmp = d2l.astype(y_hat, y.dtype) == y
+    return float(d2l.reduce_sum(d2l.astype(cmp, y.dtype)))
 
 #@save
 def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
 
-    # 初始化权重
+    train_loss_array = []
+    train_acc_array = []
+    idx = []
+
+    # 初始化权重,避免梯度爆炸：nn.init.xavier_uniform_
     def init_weights(m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
             nn.init.xavier_uniform_(m.weight)
@@ -108,37 +125,68 @@ def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
     net.to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr)
     loss = nn.CrossEntropyLoss()
-    animator = d2l.Animator(xlabel='epoch', xlim=[1, num_epochs],
-                            legend=['train loss', 'train acc', 'test acc'])
+
+    animator = d2l.Animator(xlabel='epoch', xlim=[1, num_epochs],legend=['train loss', 'train acc', 'test acc'])
     timer, num_batches = d2l.Timer(), len(train_iter)
     for epoch in range(num_epochs):
         
         # 训练损失之和，训练准确率之和，范例数
+        # 生成3组动态跟踪值，训练/测试/精度
         metric = d2l.Accumulator(3)
         net.train()
+
+        # X.shape:(256,1,28,28)
+        # y.shape:(256)
         for i, (X, y) in enumerate(train_iter):
             timer.start()
             optimizer.zero_grad()
             X, y = X.to(device), y.to(device)
+
+            # y_hat.shape:(256,10)
             y_hat = net(X)
             l = loss(y_hat, y)
             l.backward()
             optimizer.step()
+
             with torch.no_grad():
-                metric.add(l * X.shape[0], d2l.accuracy(y_hat, y), X.shape[0])
+                # 均方差 * 批量比对数量
+                # 和标签值进行匹配并进行sum合计
+                # 批量比对数量
+                metric.add(l * X.shape[0], accuracy(y_hat, y), X.shape[0])
             timer.stop()
+
+            # 训练损失数
             train_l = metric[0] / metric[2]
+            # 训练精度
             train_acc = metric[1] / metric[2]
+
             if (i + 1) % (num_batches // 5) == 0 or i == num_batches - 1:
-                animator.add(epoch + (i + 1) / num_batches,
-                             (train_l, train_acc, None))
-        test_acc = evaluate_accuracy_gpu(net, test_iter)
-        animator.add(epoch + 1, (None, None, test_acc))
-    print(f'loss {train_l:.3f}, train acc {train_acc:.3f}, '
-          f'test acc {test_acc:.3f}')
-    print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec '
-          f'on {str(device)}')
+                train_loss_array.append(train_l)
+                train_acc_array.append(train_acc)
+                idx.append(len(idx))
+                print("train_loss:"+str(train_l))
+                print("train_acc:"+str(train_acc))
+                plt.cla()
+                plt.plot(idx, train_loss_array)  
+                plt.plot(idx, train_acc_array)  
+                plt.pause(0.1)
+                # animator.add(epoch + (i + 1) / num_batches,
+                #              (train_l, train_acc, None))
+        # # 训练精度
+        # test_acc = evaluate_accuracy_gpu(net, test_iter)
+        # animator.add(epoch + 1, (None, None, test_acc))
+        
+    # print(f'loss {train_l:.3f}, train acc {train_acc:.3f}, '
+    #       f'test acc {test_acc:.3f}')
+    # print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec '
+    #       f'on {str(device)}')
+
+
 
 
 lr, num_epochs = 0.9, 10
+plt.ion()
 train_ch6(net, train_iter, test_iter, num_epochs, lr, d2l.try_gpu())
+
+plt.ioff()
+plt.show()

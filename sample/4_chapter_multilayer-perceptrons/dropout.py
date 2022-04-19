@@ -66,6 +66,7 @@ class Animator:
         # Use a lambda function to capture arguments
         self.config_axes = lambda: d2l.set_axes(self.axes[0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
         self.X, self.Y, self.fmts = None, None, fmts
+        d2l.plt.show()
 
     def add(self, x, y):
         # Add multiple data points into the figure
